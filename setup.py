@@ -11,6 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name, ['launch/mcl_launch.py']),
+        ('share/' + package_name, ['launch/mcl_teensy_launch.py']),
         ('share/' + package_name + '/resource',
             ['resource/random_bounce.yaml']),
         ('share/' + package_name + '/resource',
@@ -49,6 +50,7 @@ setup(
             'mission_controller = mcl.mission_controller:main',
             'monte_carlo_localizer = mcl.monte_carlo_localizer:main',
             'ros_to_serial = mcl.ros_to_serial:main',
+            'robot_simulator_teensy = mcl.robot_simulator_teensy:main',
         ],
     },
 )

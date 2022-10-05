@@ -86,8 +86,12 @@ def odom_motion_model(true_xt: Pose, prev_true_xt: Pose,
 
 
 def _calculate_pose_delta(xt: Pose, prev_xt: Pose):
+
+    # Get x and y of previous particle position
     x = prev_xt.position.x
     y = prev_xt.position.y
+
+    # Get theta from previous particle position
     theta = util.yaw_from_quaternion(prev_xt.orientation)
     x_prime = xt.position.x
     y_prime = xt.position.y
