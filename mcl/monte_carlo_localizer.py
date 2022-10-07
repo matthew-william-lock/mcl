@@ -435,7 +435,7 @@ class MonteCarloLocalizer(Node):
         """ Perform particle filter update and resample steps
         """
 
-        # Do not run if uninitialised
+        # Do not run if new new data is available
         if self._last_odom == self._last_used_odom:
             return
 
