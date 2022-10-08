@@ -66,26 +66,29 @@ class MonteCarloLocalizer(Node):
     def __init__(self):
  
         # Init ros node
-        super().__init__('monte_carlo_localizer')
+        super().__init__('robot_simulator')
 
         # Create subscriptions
-        self.create_subscription(Odometry, '/gps_imu_odom',self.odometry_callback, 1)
         self.create_subscription(LaserScan, '/scan',self.scan_callback, 1)
+        self.create_subscription(Odometry, '/odom',self.odometry_callback, 1)
         self.create_subscription(Odometry, '/gps_imu_odom', self.ground_truth_odometry_callback, 1)
+        self.create_subscription(Pose, '/particle_filter/esimated_pose',self.esimated_pose_callback, 1)
 
         # Create path variables (list of poses over time)
         self._mcl_path = Path()
         self._odom_path = Path()
+        self._odom_gt_path = Path()
 
         # Create publishers
         self._mcl_path_pub = self.create_publisher(Path, '/mcl_path', 10)
+        self._gt_odom_path_pub = self.create_publisher(Path, '/gt_odom_path', 10)
         self._odom_path_pub = self.create_publisher(Path, '/odom_path', 10)
-        self._particle_pub = self.create_publisher(PoseArray, '/particlecloud', 10)
 
         # Variable declaration
         self._last_used_odom: Pose = None
         self._last_odom: Pose = None
         self._last_true_odom : Pose = None
+        self._last_estimated_pose : Pose = None
         self._current_pose: Pose = None
         self._motion_model_cfg = None               # motion model configuration
         self._mcl_cfg = None                        # monte carlo configuration
@@ -141,12 +144,20 @@ class MonteCarloLocalizer(Node):
         if not self._updating:
             self._last_odom = msg.pose.pose
 
+        self._publish_odom_path(self._last_odom)        
+    
+    def esimated_pose_callback(self, msg: Pose):
+        if not self._updating:
+            self._last_estimated_pose = msg
+
+        self._publish_mcl_path(self._last_estimated_pose)
+
     def ground_truth_odometry_callback(self, msg: Odometry):
         if not self._updating:
             self._last_true_odom = msg.pose.pose
 
         # Publish odom path
-        self._publish_odom_path(self._last_true_odom)
+        self._publish_gt_odom_path(self._last_true_odom)
 
 
     def scan_callback(self, msg: LaserScan):
@@ -173,7 +184,28 @@ class MonteCarloLocalizer(Node):
         self._mcl_path.poses.append(pose)
         self._mcl_path_pub.publish(self._mcl_path)
 
+
+    def _publish_gt_odom_path(self, odom_pose: Pose):
+        
+        # Check if odom pose is valid
+        if odom_pose is None:
+            return
+
+        stamp = self.get_clock().now().to_msg()
+        self._odom_gt_path.header.frame_id = 'odom'
+        self._odom_gt_path.header.stamp = stamp
+        pose = PoseStamped()
+        pose.header = self._odom_gt_path.header
+        pose.pose = odom_pose
+        self._odom_gt_path.poses.append(pose)
+        self._gt_odom_path_pub.publish(self._odom_gt_path)
+
     def _publish_odom_path(self, odom_pose: Pose):
+        
+        # Check if odom pose is valid
+        if odom_pose is None:
+            return
+
         stamp = self.get_clock().now().to_msg()
         self._odom_path.header.frame_id = 'odom'
         self._odom_path.header.stamp = stamp
@@ -182,7 +214,6 @@ class MonteCarloLocalizer(Node):
         pose.pose = odom_pose
         self._odom_path.poses.append(pose)
         self._odom_path_pub.publish(self._odom_path)
-
     def _publish_map(self):
         map = [-1] * self._map.width * self._map.height
         idx = 0

@@ -96,12 +96,14 @@ class MonteCarloLocalizer(Node):
 
         # Create path variables (list of poses over time)
         self._mcl_path = Path()
+        self._odom_gt_path = Path()
         self._odom_path = Path()
 
         # Create publishers
         self._mcl_path_pub = self.create_publisher(Path, '/mcl_path', 10)
+        self._gt_odom_path_pub = self.create_publisher(Path, '/gt_odom_path', 10)
         self._odom_path_pub = self.create_publisher(Path, '/odom_path', 10)
-        self._particle_pub = self.create_publisher(PoseArray, '/particlecloud', 10)
+        self._particle_pub = self.create_publisher(PoseArray, '/particle_filter/particle_pose_array', 10)
 
         self.create_timer(100 * MILLISECONDS, self.timer_callback)
         self._particles: List[Particle] = []
@@ -148,7 +150,7 @@ class MonteCarloLocalizer(Node):
         )
 
         self._initialize_pose()                     # Initialise ground truth pose
-        self._initialize_particles_uniform()        # Populate the particle filter
+        self._initialize_particles_gaussian()        # Populate the particle filter
 
         # Transform publisher
         self._tf_publisher = StaticTransformBroadcaster(self)
@@ -213,8 +215,8 @@ class MonteCarloLocalizer(Node):
         if pose is None:
             pose = self._current_pose
 
-        x_list = list(np.random.normal(loc=pose.position.x, scale=scale, size=self._mcl_cfg['num_of_particles'] - 1))
-        y_list = list(np.random.normal(loc=pose.position.y, scale=scale, size=self._mcl_cfg['num_of_particles'] - 1))
+        x_list = list(np.random.normal(loc=pose.position.x, scale=scale, size=self._mcl_cfg['num_of_particles'] ))
+        y_list = list(np.random.normal(loc=pose.position.y, scale=scale, size=self._mcl_cfg['num_of_particles'] ))
         current_yaw = util.yaw_from_quaternion(pose.orientation)
         yaw_list = list(np.random.normal(loc=current_yaw, scale=0.01, size=self._mcl_cfg['num_of_particles'] - 1))
 
@@ -226,7 +228,7 @@ class MonteCarloLocalizer(Node):
             temp_pose = Pose(position=position, orientation=orientation)
             self._particles.append(Particle(temp_pose, initial_weight))
 
-        self._particles.append(Particle(pose, initial_weight))
+        # self._particles.append(Particle(pose, initial_weight))
 
     def _initialize_particles_uniform(self, pose: Pose = None):
         """ Initialise particles from a Uniform distribution centered on the robot extending towards extremeties of the map
@@ -238,11 +240,11 @@ class MonteCarloLocalizer(Node):
             pose = self._current_pose
 
         # Sample from uniform distribution for initial x and y positions
-        x_list = list(np.random.uniform(low=-1.5/2, high=1.5/2,size=self._mcl_cfg['num_of_particles'] - 1))
-        y_list = list(np.random.uniform(low=-1.5/2, high=1.5/2,size=self._mcl_cfg['num_of_particles'] - 1))
+        x_list = list(np.random.uniform(low=-1.5/2, high=1.5/2,size=self._mcl_cfg['num_of_particles']))
+        y_list = list(np.random.uniform(low=-1.5/2, high=1.5/2,size=self._mcl_cfg['num_of_particles']))
 
         current_yaw = util.yaw_from_quaternion(pose.orientation)
-        yaw_list = list(np.random.uniform(low=-np.pi,high=np.pi, size=self._mcl_cfg['num_of_particles'] - 1))
+        yaw_list = list(np.random.uniform(low=-np.pi,high=np.pi, size=self._mcl_cfg['num_of_particles']))
         
         # Initalise weights, cummulative propoabilty should equal 1!
         initial_weight = 1.0 / float(self._mcl_cfg['num_of_particles'])
@@ -253,9 +255,6 @@ class MonteCarloLocalizer(Node):
             orientation = util.euler_to_quaternion(yaw, 0.0, 0.0)
             temp_pose = Pose(position=position, orientation=orientation)
             self._particles.append(Particle(temp_pose, initial_weight))
-
-        # Append the particle !
-        self._particles.append(Particle(pose, initial_weight))
 
     def _normalize_particles(self, particles: List[Particle], log):
         sum_of_weights = 0.0
@@ -371,6 +370,11 @@ class MonteCarloLocalizer(Node):
         self._map_publisher.publish(msg)
 
     def _publish_mcl_path(self, published_pose: Pose):
+
+        # Check if odom pose is valid
+        if published_pose is None:
+            return
+
         stamp = self.get_clock().now().to_msg()
         self._mcl_path.header.frame_id = 'map'
         self._mcl_path.header.stamp = stamp
@@ -380,7 +384,27 @@ class MonteCarloLocalizer(Node):
         self._mcl_path.poses.append(pose)
         self._mcl_path_pub.publish(self._mcl_path)
 
+    def _publish_gt_odom_path(self, odom_pose: Pose):
+        
+        # Check if odom pose is valid
+        if odom_pose is None:
+            return
+
+        stamp = self.get_clock().now().to_msg()
+        self._odom_gt_path.header.frame_id = 'odom'
+        self._odom_gt_path.header.stamp = stamp
+        pose = PoseStamped()
+        pose.header = self._odom_gt_path.header
+        pose.pose = odom_pose
+        self._odom_gt_path.poses.append(pose)
+        self._gt_odom_path_pub.publish(self._odom_gt_path)
+
     def _publish_odom_path(self, odom_pose: Pose):
+        
+        # Check if odom pose is valid
+        if odom_pose is None:
+            return
+
         stamp = self.get_clock().now().to_msg()
         self._odom_path.header.frame_id = 'odom'
         self._odom_path.header.stamp = stamp
@@ -434,7 +458,7 @@ class MonteCarloLocalizer(Node):
         self._particles = self._normalize_particles(new_particles, self.get_logger())
         self._current_pose = self._pose_estimate(self._particles)
         self._publish_mcl_path(self._current_pose)
-        self._publish_odom_path(self._last_odom)
+        self._publish_gt_odom_path(self._last_odom)
         self._updating = False
 
     def _update(self):
@@ -468,7 +492,8 @@ class MonteCarloLocalizer(Node):
         # Estimate the pose and publish the new paths
         self._current_pose = self._pose_estimate(self._particles)
         self._publish_mcl_path(self._current_pose)
-        self._publish_odom_path(self._last_true_odom)
+        self._publish_gt_odom_path(self._last_true_odom)
+        self._publish_odom_path(self._last_odom)
 
         # Determine if we should resample and resample if neccessary
         # if self._should_resample(self._particles, self._mcl_cfg['num_of_particles'] / 5.0):
