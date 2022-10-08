@@ -69,8 +69,9 @@ class MonteCarloLocalizer(Node):
         super().__init__('monte_carlo_localizer')
 
         # Create subscriptions
-        self.create_subscription(Odometry, '/odom',self.odometry_callback, 1)
+        self.create_subscription(Odometry, '/gps_imu_odom',self.odometry_callback, 1)
         self.create_subscription(LaserScan, '/scan',self.scan_callback, 1)
+        self.create_subscription(Odometry, '/gps_imu_odom', self.ground_truth_odometry_callback, 1)
 
         # Create path variables (list of poses over time)
         self._mcl_path = Path()
@@ -84,6 +85,7 @@ class MonteCarloLocalizer(Node):
         # Variable declaration
         self._last_used_odom: Pose = None
         self._last_odom: Pose = None
+        self._last_true_odom : Pose = None
         self._current_pose: Pose = None
         self._motion_model_cfg = None               # motion model configuration
         self._mcl_cfg = None                        # monte carlo configuration
@@ -139,8 +141,13 @@ class MonteCarloLocalizer(Node):
         if not self._updating:
             self._last_odom = msg.pose.pose
 
+    def ground_truth_odometry_callback(self, msg: Odometry):
+        if not self._updating:
+            self._last_true_odom = msg.pose.pose
+
         # Publish odom path
-        self._publish_odom_path(msg.pose.pose)
+        self._publish_odom_path(self._last_true_odom)
+
 
     def scan_callback(self, msg: LaserScan):
         if not self._updating:

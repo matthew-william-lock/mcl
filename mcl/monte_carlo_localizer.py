@@ -91,6 +91,7 @@ class MonteCarloLocalizer(Node):
 
         # Create subscriptions
         self.create_subscription(Odometry, '/odom',self.odometry_callback, 1)
+        self.create_subscription(Odometry, '/gps_imu_odom', self.ground_truth_odometry_callback, 1)
         self.create_subscription(LaserScan, '/scan',self.scan_callback, 1)
 
         # Create path variables (list of poses over time)
@@ -108,6 +109,7 @@ class MonteCarloLocalizer(Node):
         # Variable declaration
         self._last_used_odom: Pose = None
         self._last_odom: Pose = None
+        self._last_true_odom : Pose = None
         self._current_pose: Pose = None
         self._motion_model_cfg = None               # motion model configuration
         self._mcl_cfg = None                        # monte carlo configuration
@@ -184,6 +186,10 @@ class MonteCarloLocalizer(Node):
         if not self._updating:
             self._last_odom = msg.pose.pose
 
+    def ground_truth_odometry_callback(self, msg: Odometry):
+        if not self._updating:
+            self._last_true_odom = msg.pose.pose
+
     def scan_callback(self, msg: LaserScan):
         if not self._updating:
             self._last_scan = msg
@@ -232,8 +238,8 @@ class MonteCarloLocalizer(Node):
             pose = self._current_pose
 
         # Sample from uniform distribution for initial x and y positions
-        x_list = list(np.random.uniform(low=-1.5, high=1.5,size=self._mcl_cfg['num_of_particles'] - 1))
-        y_list = list(np.random.uniform(low=-1.5, high=1.5,size=self._mcl_cfg['num_of_particles'] - 1))
+        x_list = list(np.random.uniform(low=-1.5/2, high=1.5/2,size=self._mcl_cfg['num_of_particles'] - 1))
+        y_list = list(np.random.uniform(low=-1.5/2, high=1.5/2,size=self._mcl_cfg['num_of_particles'] - 1))
 
         current_yaw = util.yaw_from_quaternion(pose.orientation)
         yaw_list = list(np.random.uniform(low=-np.pi,high=np.pi, size=self._mcl_cfg['num_of_particles'] - 1))
@@ -462,11 +468,13 @@ class MonteCarloLocalizer(Node):
         # Estimate the pose and publish the new paths
         self._current_pose = self._pose_estimate(self._particles)
         self._publish_mcl_path(self._current_pose)
-        self._publish_odom_path(self._last_odom)
+        self._publish_odom_path(self._last_true_odom)
 
         # Determine if we should resample and resample if neccessary
-        if self._should_resample(self._particles, self._mcl_cfg['num_of_particles'] / 5.0):
-            self._particles = self._resample(self._particles)
+        # if self._should_resample(self._particles, self._mcl_cfg['num_of_particles'] / 5.0):
+        #     self._particles = self._resample(self._particles)
+
+        self._particles = self._resample(self._particles)
 
         self._updating = False
 

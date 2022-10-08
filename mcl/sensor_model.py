@@ -364,10 +364,10 @@ class LikelihoodFields:
                 range_y = pose_in_map.y + laser_range * sin(range_angle)
 
                 # Ensure we remain within the bounds of the map
-                if range_x >= self._map.width * self._map.resolution:
-                    range_x = (self._map.width - 1) * self._map.resolution
-                if range_y >= self._map.height * self._map.resolution:
-                    range_y = (self._map.height - 1) * self._map.resolution
+                # if range_x >= self._map.width * self._map.resolution:
+                #     range_x = (self._map.width - 1) * self._map.resolution
+                # if range_y >= self._map.height * self._map.resolution:
+                #     range_y = (self._map.height - 1) * self._map.resolution
 
                 # Get the closest object distance
                 dist = self._closest_object_dist(int(range_x / self._map.resolution), int(range_y / self._map.resolution))
@@ -386,8 +386,8 @@ class LikelihoodFields:
         probability = norm(scale=self._std_dev).pdf(dist)
         
         # Limit the probability
-        if probability >= 1.0:
-            probability = 1.0
+        # if probability >= 1.0:
+        #     probability = 1.0
 
         return probability
 
