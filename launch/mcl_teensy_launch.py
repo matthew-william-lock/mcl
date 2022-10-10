@@ -3,6 +3,7 @@ import launch
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.actions import IncludeLaunchDescription
@@ -31,6 +32,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         webots_launch,
+        ExecuteProcess(cmd=['ros2', 'bag', 'record', '-a','--exclude','\/camera.*\w*'], output='screen', log_cmd=True),
         Node(
             package='rviz2',
             executable='rviz2',
@@ -42,7 +44,7 @@ def generate_launch_description():
         Node(
             package='mcl',
             executable='random_bounce',
-            output='log'
+            output='screen'
         ),
         Node(
             package='mcl',
@@ -55,4 +57,5 @@ def generate_launch_description():
             executable='robot_simulator_teensy',
             output='log'
         ),
+        
     ])

@@ -39,6 +39,8 @@ TOF_MIN_READING = 0.005
 IR_MAX_READING = 0.070
 IR_MIN_READING = 0.005
 
+# Set seed for random number generator
+random.seed(42**2)
 
 class RandomBounce(Node):
 
