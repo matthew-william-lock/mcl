@@ -13,6 +13,7 @@ def generate_launch_description():
     package_dir = get_package_share_directory('webots_ros2_epuck')
 
     use_rviz = LaunchConfiguration('rviz', default=False)
+    use_randombounce = LaunchConfiguration('rb', default=True) # Use dualsense controller  
     synchronization = LaunchConfiguration('synchronization', default=False)
     use_sim_time = LaunchConfiguration('use_sim_time', default=True)
     world = LaunchConfiguration('world', default='epuck_world.wbt')
@@ -42,7 +43,8 @@ def generate_launch_description():
         Node(
             package='mcl',
             executable='random_bounce',
-            output='log'
+            output='log',
+            condition=launch.conditions.IfCondition(use_randombounce)
         ),
         Node(
             package='mcl',

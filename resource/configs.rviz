@@ -215,23 +215,21 @@ Visualization Manager:
         All Enabled: false
         accelerometer:
           Value: true
-        accelerometer_1:
-          Value: true
         appearance:
           Value: true
-        appearance_10:
+        appearance_11:
           Value: true
-        appearance_12:
+        appearance_13:
           Value: true
-        appearance_14:
+        appearance_15:
           Value: true
-        appearance_16:
+        appearance_3:
           Value: true
-        appearance_4:
+        appearance_5:
           Value: true
-        appearance_6:
+        appearance_7:
           Value: true
-        appearance_8:
+        appearance_9:
           Value: true
         base_footprint:
           Value: true
@@ -244,8 +242,6 @@ Visualization Manager:
         cap screw(0):
           Value: true
         cap screw(1):
-          Value: true
-        compass:
           Value: true
         emitter:
           Value: true
@@ -313,35 +309,35 @@ Visualization Manager:
           Value: true
         ps0:
           Value: true
-        ps0_15:
+        ps0_14:
           Value: true
         ps1:
           Value: true
-        ps1_13:
+        ps1_12:
           Value: true
         ps2:
           Value: true
-        ps2_11:
+        ps2_10:
           Value: true
         ps3:
           Value: true
-        ps3_9:
+        ps3_8:
           Value: true
         ps4:
           Value: true
-        ps4_7:
+        ps4_6:
           Value: true
         ps5:
           Value: true
-        ps5_5:
+        ps5_4:
           Value: true
         ps6:
           Value: true
-        ps6_3:
+        ps6_2:
           Value: true
         ps7:
           Value: true
-        ps7_2:
+        ps7_1:
           Value: true
         receiver:
           Value: true
@@ -364,13 +360,9 @@ Visualization Manager:
             base_link:
               accelerometer:
                 {}
-              accelerometer_1:
-                {}
               base_footprint:
                 {}
               camera:
-                {}
-              compass:
                 {}
               emitter:
                 {}
@@ -440,35 +432,35 @@ Visualization Manager:
               pipe:
                 {}
               ps0:
-                ps0_15:
-                  appearance_16:
+                ps0_14:
+                  appearance_15:
                     {}
               ps1:
-                ps1_13:
-                  appearance_14:
+                ps1_12:
+                  appearance_13:
                     {}
               ps2:
-                ps2_11:
-                  appearance_12:
+                ps2_10:
+                  appearance_11:
                     {}
               ps3:
-                ps3_9:
-                  appearance_10:
+                ps3_8:
+                  appearance_9:
                     {}
               ps4:
-                ps4_7:
-                  appearance_8:
+                ps4_6:
+                  appearance_7:
                     {}
               ps5:
-                ps5_5:
-                  appearance_6:
+                ps5_4:
+                  appearance_5:
                     {}
               ps6:
-                ps6_3:
-                  appearance_4:
+                ps6_2:
+                  appearance_3:
                     {}
               ps7:
-                ps7_2:
+                ps7_1:
                   appearance:
                     {}
               receiver:
@@ -618,7 +610,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0
+      Angle: 3.140000104904175
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -628,7 +620,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 510.5394592285156
+      Scale: 500
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz_default_plugins)
       X: 0

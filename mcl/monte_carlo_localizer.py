@@ -47,6 +47,9 @@ from typing import List
 MILLISECONDS = 0.001
 ALMOST_ZERO = 1e-15
 
+SAMPLE_FREQ = 30
+SAMPLE_PERIOD = 1.0 / SAMPLE_FREQ * 1000
+
 
 # Partcile model
 class Particle:
@@ -105,7 +108,7 @@ class MonteCarloLocalizer(Node):
         self._odom_path_pub = self.create_publisher(Path, '/odom_path', 10)
         self._particle_pub = self.create_publisher(PoseArray, '/particle_filter/particle_pose_array', 10)
 
-        self.create_timer(100 * MILLISECONDS, self.timer_callback)
+        self.create_timer(SAMPLE_PERIOD * MILLISECONDS, self.timer_callback)
         self._particles: List[Particle] = []
 
         # Variable declaration
